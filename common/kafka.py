@@ -1,5 +1,5 @@
 from kafka import KafkaProducer
-from conf.kafka_conf import bootstrap_servers
+from conf import KAFKA_BOOTSTRAP_SERVERS
 
 
-producer = KafkaProducer(bootstrap_servers=bootstrap_servers)
+producer = KafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
