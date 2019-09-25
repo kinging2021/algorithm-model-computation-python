@@ -5,6 +5,6 @@ COPY . /calc_server
 WORKDIR /calc_server
 RUN pip install -r requirements.txt
 
-ENTRYPOINT ["gunicorn -c ./conf/gunicorn_conf.py run_server:app"]
+CMD ["gunicorn -c ./conf/gunicorn_conf.py run_server:app"]
 
 
