@@ -37,10 +37,8 @@ class OneDayLSTM(object):
 
 
 def call(param: dict, model_url: str):
-    # todo: load model from file server
-    # asset = ModelLoader.load(model_url)
     keras.backend.clear_session()
-    asset = ModelLoader.load_file('./static/kelun_power_forecast_one_day.pkl')
+    asset = ModelLoader.load(model_url)
     forecaster = OneDayLSTM(asset=asset)
     date = datetime.datetime.strptime(param.get('date'), '%Y-%m-%d')
     result = forecaster.forecast(target_date=date)

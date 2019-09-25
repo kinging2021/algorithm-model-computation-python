@@ -8,13 +8,14 @@ class ModelLoader(object):
     def __init__(self):
         pass
 
-    def load(self, model_url):
+    @classmethod
+    def load(cls, model_url):
         """Load model from hdfs
 
         :param model_url:
         :return:
         """
-        with self.hdfs_client.read(model_url) as f:
+        with cls.hdfs_client.read(model_url) as f:
             obj = pickle.load(f)
             return obj
 
