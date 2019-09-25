@@ -5,4 +5,5 @@ from .index import IndexView
 api = Api()
 
 api.add_resource(IndexView, '/')
-api.add_resource(Executor, '/api/algorithm/executor')
+api.add_resource(Executor, '/api/algorithm/business')
+api.add_resource(Executor, '/api/algorithm/base')
