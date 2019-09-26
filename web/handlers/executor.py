@@ -38,7 +38,6 @@ class Executor(BaseResource):
             self.ret['code'] = 0
             self.ret['msg'] = 'OK'
             self.ret['result'] = result
-            logger.info('Module call succeeded: %s' % module_name)
             return jsonify(self.ret)
         except Exception as e:
             self.ret['code'] = -2
