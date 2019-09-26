@@ -3,15 +3,11 @@ from conf import FLASK_CONFIG
 from . import handlers, extensions
 
 
-def create_app(config_name='development'):
-    """
-    :param config_name: 环境名
-    :return: app应用
-    """
+def create_app():
 
     app = Flask(__name__)
 
-    app.config.from_object(FLASK_CONFIG[config_name])
+    app.config.from_object(FLASK_CONFIG)
 
     handlers.init_app(app)
 
