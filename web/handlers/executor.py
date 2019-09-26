@@ -20,16 +20,16 @@ class Executor(BaseResource):
         if module_spec is None:
             self.ret['code'] = -1
             self.ret['msg'] = 'Module not found: %s' % module_name
-            logger.error(self.ret['msg'])
+            logger.error(self.ret['msg'], exc_info=True, stack_info=True)
             return jsonify(self.ret)
 
         try:
             module = importlib.util.module_from_spec(module_spec)
             module_spec.loader.exec_module(module)
-        except Exception as e:
+        except Exception:
             self.ret['code'] = -1
             self.ret['msg'] = 'Module loading failed: %s' % module_name
-            logger.error(self.ret['msg'] + ', Exception: %s' % str(e))
+            logger.error(self.ret['msg'], exc_info=True, stack_info=True)
             return jsonify(self.ret)
 
         try:
@@ -39,8 +39,8 @@ class Executor(BaseResource):
             self.ret['msg'] = 'OK'
             self.ret['result'] = result
             return jsonify(self.ret)
-        except Exception as e:
+        except Exception:
             self.ret['code'] = -2
             self.ret['msg'] = 'Exception raised when calling module: %s' % module_name
-            logger.error(self.ret['msg'] + ', Exception: %s' % str(e))
+            logger.error(self.ret['msg'], exc_info=True, stack_info=True)
             return jsonify(self.ret)
