@@ -6,7 +6,7 @@ HDFS_ROOT = ''
 # HDFS_ROOT = '/algorithm/model/'
 
 # ELK kafka config
-ELK_KAFKA_ENABLE = False
+ELK_KAFKA_ENABLE = True
 ELK_KAFKA_BOOTSTRAP_SERVERS = [
     '10.39.40.25:9092',
     '10.39.40.29:9092',
