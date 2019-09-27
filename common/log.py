@@ -3,21 +3,24 @@ import time
 import logging
 import socket
 import json
-from common.kafka import producer
-from conf import KAFKA_TOPIC, APP_ID
+from common.kafka import elk_producer
+from conf import ELK_KAFKA_TOPIC, ELK_APP_ID, ELK_KAFKA_ENABLE
 
 
 class LoggerHandlerToKafKa(logging.Handler):
-    def __init__(self, topic, app_id, version=1):
+    def __init__(self, topic, app_id, version=1, enable=True):
         super(LoggerHandlerToKafKa, self).__init__()
 
-        self.producer = producer
+        self.producer = elk_producer
         self.topic = topic
         self.app_id = app_id
         self.hostname = socket.gethostname()
         self.version = version
+        self.enable = enable
 
     def emit(self, record):
+        if not self.enable:
+            return
         data = {
             "@timestamp": self.__get_time(record.created),
             "@version": self.version,
@@ -53,7 +56,7 @@ formatter = logging.Formatter('%(asctime)s %(levelname)-8s: %(message)s')
 console_handler = logging.StreamHandler(sys.stdout)
 console_handler.formatter = formatter
 
-kafka_handler = LoggerHandlerToKafKa(KAFKA_TOPIC, APP_ID)
+kafka_handler = LoggerHandlerToKafKa(ELK_KAFKA_TOPIC, ELK_APP_ID, enable=ELK_KAFKA_ENABLE)
 
 logger.addHandler(kafka_handler)
 logger.addHandler(console_handler)
