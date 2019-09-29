@@ -4,6 +4,7 @@ import keras
 
 from data_handler.api_data import IndicatorData
 from common.model_loader import ModelLoader
+from algorithm.exception import ParamError, DataError
 
 
 class OneDayLSTM(object):
@@ -26,8 +27,15 @@ class OneDayLSTM(object):
         raw_data = ds.get_data(start_time, end_time, 'day')
         results = raw_data['data'][0]['result']
 
-        # todo: data check
-        return [item['value'] for item in results]
+        data = []
+        for item in results:
+            if not isinstance(item['value'], (int, float)):
+                raise DataError('History data type error')
+            data.append(item['value'])
+        if len(data) != 5:
+            raise DataError('History data not enough')
+
+        return data
 
     def _get_result(self, data):
         input_x = self.scaler.transform(np.asarray(data).reshape((-1, 1)))
@@ -37,9 +45,15 @@ class OneDayLSTM(object):
 
 
 def call(param: dict, model_url: str):
+    if param is None:
+        raise ParamError('Missing required parameter in the JSON body: param')
+    date = param.get('date')
+    if not date:
+        raise ParamError('Required parameter \'date\' not found in \'param\'')
+
     keras.backend.clear_session()
     asset = ModelLoader.load(model_url)
     forecaster = OneDayLSTM(asset=asset)
-    date = datetime.datetime.strptime(param.get('date'), '%Y-%m-%d')
+    date = datetime.datetime.strptime(date, '%Y-%m-%d')
     result = forecaster.forecast(target_date=date)
     return result
