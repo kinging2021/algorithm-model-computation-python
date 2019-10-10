@@ -14,6 +14,7 @@ class EnergyStatus(object):
     downtime_str = "down_time"
     down_hour_str = "down_hours"
     down_nums_str = "down_nums"
+    energy_mode_str = "energy_mode"
 
     def __init__(self, asset: dict):
         """
@@ -39,7 +40,7 @@ class EnergyStatus(object):
                              EnergyStatus.down_hour_str: "24",
                              EnergyStatus.down_nums_str: 1}
             data["tag"] = 0
-        energy_status["工作模式"] = energe_mode
+        energy_status[EnergyStatus.energy_mode_str] = energe_mode
         return energy_status
 
     def _get_energy_status(self, mode):
@@ -56,8 +57,8 @@ class EnergyStatus(object):
         energy_cluster.analyze()
         energy_time = energy_cluster.get_energy_time()
         break_info = energy_cluster.get_break_info()
-        energy_status = {EnergyStatus.uptime_str: datetime.datetime.strftime(energy_time[0], "%Y%m%d %H:%M:%S"),
-                         EnergyStatus.downtime_str: datetime.datetime.strftime(energy_time[1], "%Y%m%d %H:%M:%S"),
+        energy_status = {EnergyStatus.uptime_str: datetime.datetime.strftime(energy_time[0], "%Y-%m-%d %H:%M:%S"),
+                         EnergyStatus.downtime_str: datetime.datetime.strftime(energy_time[1], "%Y-%m-%d %H:%M:%S"),
                          EnergyStatus.down_hour_str: break_info[1],
                          EnergyStatus.down_nums_str: break_info[0]}
         return energy_status
