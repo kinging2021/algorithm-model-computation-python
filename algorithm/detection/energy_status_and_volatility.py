@@ -63,7 +63,6 @@ class EnergyStatus(object):
         if energy_time[1] is None:
             energy_time[1] = self.data.iloc[-1]["datetime"]
 
-
         energy_status = {EnergyStatus.uptime_str: datetime.datetime.strftime(energy_time[0], "%Y-%m-%d %H:%M:%S"),
                          EnergyStatus.downtime_str: datetime.datetime.strftime(energy_time[1], "%Y-%m-%d %H:%M:%S"),
                          EnergyStatus.down_hour_str: break_info[1],
@@ -137,8 +136,9 @@ class EnergyVolatility(object):
             energy_cluster.analyze()
 
         volatility_weight_dict = self.model["volatility_weight"]
-        df_work = data[(data["tag"] == 1) & ((data["day"] == date.day) | (data["hour"] < 7))]
-        print(df_work)
+        df_work = data[(data["tag"] == 1) &
+                       (((data["day"] == date.day) & (data["hour"] > 5))
+                        | ((data["hour"] < 7) & (data["day"] != date.day)))]
         total_vol = 0
         for key in volatility_weight_dict:
             if len(df_work) == 0:
@@ -158,7 +158,7 @@ def call(param: dict, model_url: str):
     if not date:
         raise ParamError('Required parameter \'date\' not found in \'param\'')
 
-    asset = ModelLoader.load(model_url)
+    asset = ModelLoader.load_file(model_url)
     time_detector = EnergyStatus(asset=asset)
     date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
     time_status = time_detector.detect(target_date=date)
