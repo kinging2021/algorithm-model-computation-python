@@ -158,7 +158,7 @@ def call(param: dict, model_url: str):
     if not date:
         raise ParamError('Required parameter \'date\' not found in \'param\'')
 
-    asset = ModelLoader.load_file(model_url)
+    asset = ModelLoader.load(model_url)
     time_detector = EnergyStatus(asset=asset)
     date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
     time_status = time_detector.detect(target_date=date)
