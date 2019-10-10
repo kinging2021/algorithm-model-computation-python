@@ -57,6 +57,12 @@ class EnergyStatus(object):
         energy_cluster.analyze()
         energy_time = energy_cluster.get_energy_time()
         break_info = energy_cluster.get_break_info()
+        if energy_time[0] is None:
+            energy_time[0] = self.data.iloc[0]["datetime"]
+        if energy_time[1] is None:
+            energy_time[1] = self.data.iloc[-1]["datetime"]
+
+
         energy_status = {EnergyStatus.uptime_str: datetime.datetime.strftime(energy_time[0], "%Y-%m-%d %H:%M:%S"),
                          EnergyStatus.downtime_str: datetime.datetime.strftime(energy_time[1], "%Y-%m-%d %H:%M:%S"),
                          EnergyStatus.down_hour_str: break_info[1],

@@ -136,6 +136,10 @@ class EnergyStatusCluster:
         if self.begin_index is None:
             self.get_energy_time()
         nums, time = 0, 0
+        if self.begin_index is None:
+            return [0, 0]
+        if self.end_index is None:
+            self.end_index = len(self.event_queue)
         for i in range(self.begin_index, self.end_index):
             if self.event_queue[i].description == "休息":
                 nums += 1
