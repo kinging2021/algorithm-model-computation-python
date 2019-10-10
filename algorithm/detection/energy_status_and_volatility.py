@@ -9,12 +9,13 @@ from algorithm.base.cluster.energy_status_cluster import EnergyStatusCluster
 
 
 class EnergyStatus(object):
-    lable_list = ["白班+夜班", "休息", "10小时", "12小时", "8小时"]
     uptime_str = "up_time"
     downtime_str = "down_time"
     down_hour_str = "down_hours"
     down_nums_str = "down_nums"
     energy_mode_str = "energy_mode"
+    rest_mode_str = "休息"
+    double_day_mode_str = "白班+夜班"
 
     def __init__(self, asset: dict):
         """
@@ -32,7 +33,7 @@ class EnergyStatus(object):
         data = self._get_data(target_date)
         self.data = data
         energe_mode = self._get_energy_mode()
-        if energe_mode != EnergyStatus.lable_list[1]:
+        if energe_mode != EnergyStatus.rest_mode_str:
             energy_status = self._get_energy_status(energe_mode)
         else:
             energy_status = {EnergyStatus.uptime_str: None,
@@ -45,7 +46,7 @@ class EnergyStatus(object):
 
     def _get_energy_status(self, mode):
         model = self.model
-        if mode == EnergyStatus.lable_list[0]:
+        if mode == EnergyStatus.double_day_mode_str:
             data = self.data
         else:
             data = self.data.iloc[:len(self.data) // 2]
@@ -57,6 +58,11 @@ class EnergyStatus(object):
         energy_cluster.analyze()
         energy_time = energy_cluster.get_energy_time()
         break_info = energy_cluster.get_break_info()
+        if energy_time[0] is None:
+            energy_time[0] = self.data.iloc[0]["datetime"]
+        if energy_time[1] is None:
+            energy_time[1] = self.data.iloc[-1]["datetime"]
+
         energy_status = {EnergyStatus.uptime_str: datetime.datetime.strftime(energy_time[0], "%Y-%m-%d %H:%M:%S"),
                          EnergyStatus.downtime_str: datetime.datetime.strftime(energy_time[1], "%Y-%m-%d %H:%M:%S"),
                          EnergyStatus.down_hour_str: break_info[1],
@@ -130,8 +136,9 @@ class EnergyVolatility(object):
             energy_cluster.analyze()
 
         volatility_weight_dict = self.model["volatility_weight"]
-        df_work = data[(data["tag"] == 1) & ((data["day"] == date.day) | (data["hour"] < 7))]
-        print(df_work)
+        df_work = data[(data["tag"] == 1) &
+                       (((data["day"] == date.day) & (data["hour"] > 5))
+                        | ((data["hour"] < 7) & (data["day"] != date.day)))]
         total_vol = 0
         for key in volatility_weight_dict:
             if len(df_work) == 0:
