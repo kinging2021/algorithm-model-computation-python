@@ -10,9 +10,9 @@ import pandas as pd
 """
 
 
-def get_history_data(begin_time):
+def get_history_data(begin_time, days=2):
     begin_s = datetime.datetime.strftime(begin_time, "%Y-%m-%d %H:00:00")
-    end_time = begin_time + datetime.timedelta(days=2)
+    end_time = begin_time + datetime.timedelta(days=days)
     end_s = datetime.datetime.strftime(end_time, "%Y-%m-%d 00:00:00")
     url = "https://edge.fanneng.com/jml//ems/device/findLineNowDH/PARK120_EMS05/14472/%s/%s/5/1"
     url = url % (begin_s, end_s)
@@ -92,8 +92,8 @@ def add_features(df):
     return df
 
 
-def get_jinmailang_df(begin_time):
-    data = get_history_data(begin_time)
+def get_jinmailang_df(begin_time, days=2):
+    data = get_history_data(begin_time, days)
     df = get_jml_df(data)
     df = add_features(df)
-    return df
+    return df.iloc[:-1]
