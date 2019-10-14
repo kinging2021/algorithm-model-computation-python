@@ -5,4 +5,4 @@ WORKDIR /calc_server
 RUN pip install -r requirements.txt
 
 #CMD ["/usr/local/bin/gunicorn", "--chdir", "/calc_server", "-c", "/calc_server/conf/gunicorn_conf.py", "run_server:app"]
-CMD ["python3", "run_server.py"]
+CMD ["python", "run_server.py"]
