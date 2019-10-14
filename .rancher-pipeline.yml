@@ -4,9 +4,9 @@ stages:
   - publishImageConfig:
       dockerfilePath: ./Dockerfile
       buildContext: .
-      tag: harbor.enn.cn/bigdata/algorithm-model-computation-python:${CICD_EXECUTION_SEQUENCE}
+      tag: fnwharbor.enncloud.cn/bigdata/algorithm-model-computation-python:${CICD_EXECUTION_SEQUENCE}
       pushRemote: true
-      registry: harbor.enn.cn
+      registry: fnwharbor.enncloud.cn
 - name: 输出镜像名称
   steps:
   - runScriptConfig:

@@ -1,4 +1,4 @@
-FROM harbor.enn.cn/bigdata/calc_server:0.2
+FROM fnwharbor.enncloud.cn/bigdata/calc_server:0.2
 
 COPY . /calc_server
 WORKDIR /calc_server
