@@ -1,3 +1,5 @@
+pyod==0.7.4
+geomdl==5.2.9
 gunicorn==19.9.0
 gevent==1.4.0
 hdfs==2.5.8
