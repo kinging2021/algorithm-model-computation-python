@@ -11,6 +11,6 @@ stages:
   steps:
   - runScriptConfig:
       image: python:latest
-      shellScript: 'echo "docker image: harbor.enn.cn/bigdata/algorithm-model-computation-python:${CICD_EXECUTION_SEQUENCE}"'
+      shellScript: 'echo "docker image: fnwharbor.enncloud.cn/bigdata/algorithm-model-computation-python:${CICD_EXECUTION_SEQUENCE}"'
 timeout: 60
 notification: {}
