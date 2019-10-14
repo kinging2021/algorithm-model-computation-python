@@ -1,3 +1,4 @@
+scikit-learn
 gunicorn==19.9.0
 gevent==1.4.0
 hdfs==2.5.8
@@ -8,3 +9,4 @@ Flask_RESTful==0.3.7
 Keras==2.2.5
 numpy==1.16.4
 tornado==6.0.3
+pandas==0.24.2
