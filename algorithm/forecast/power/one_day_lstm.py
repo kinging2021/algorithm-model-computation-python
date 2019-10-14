@@ -44,15 +44,17 @@ class OneDayLSTM(object):
         return result.tolist()[0][0]
 
 
-def call(param: dict, model_url: str):
-    if param is None:
-        raise ParamError('Missing required parameter in the JSON body: param')
-    date = param.get('date')
+def call(*args, **kwargs):
+    for p in ['param', 'model_url']:
+        if p not in kwargs.keys():
+            raise ParamError('Missing required parameter in the JSON body: \'%s\'' % p)
+
+    date = kwargs['param'].get('date')
     if not date:
         raise ParamError('Required parameter \'date\' not found in \'param\'')
 
     keras.backend.clear_session()
-    asset = ModelLoader.load(model_url)
+    asset = ModelLoader.load(kwargs['model_url'])
     forecaster = OneDayLSTM(asset=asset)
     date = datetime.datetime.strptime(date, '%Y-%m-%d')
     result = forecaster.forecast(target_date=date)

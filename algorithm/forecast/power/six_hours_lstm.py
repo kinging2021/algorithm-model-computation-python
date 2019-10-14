@@ -45,15 +45,17 @@ class SixHoursLSTM(object):
         return result.squeeze().tolist()
 
 
-def call(param: dict, model_url: str):
-    if param is None:
-        raise ParamError('Missing required parameter in the JSON body: param')
-    start_time = param.get('startTime')
+def call(*args, **kwargs):
+    for p in ['param', 'model_url']:
+        if p not in kwargs.keys():
+            raise ParamError('Missing required parameter in the JSON body: \'%s\'' % p)
+
+    start_time = kwargs['param'].get('startTime')
     if not start_time:
         raise ParamError('Required parameter \'startTime\' not found in \'param\'')
 
     keras.backend.clear_session()
-    asset = ModelLoader.load(model_url)
+    asset = ModelLoader.load(kwargs['model_url'])
     forecaster = SixHoursLSTM(asset=asset)
     target_time = datetime.datetime.strptime(start_time[0:13], '%Y-%m-%d %H')
     result = forecaster.forecast(target_time=target_time)

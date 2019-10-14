@@ -44,15 +44,17 @@ class OneHourLSTM(object):
         return result.tolist()[0][0]
 
 
-def call(param: dict, model_url: str):
-    if param is None:
-        raise ParamError('Missing required parameter in the JSON body: param')
-    target_time = param.get('datetime')
+def call(*args, **kwargs):
+    for p in ['param', 'model_url']:
+        if p not in kwargs.keys():
+            raise ParamError('Missing required parameter in the JSON body: \'%s\'' % p)
+
+    target_time = kwargs['param'].get('datetime')
     if not target_time:
         raise ParamError('Required parameter \'datetime\' not found in \'param\'')
 
     keras.backend.clear_session()
-    asset = ModelLoader.load(model_url)
+    asset = ModelLoader.load(kwargs['model_url'])
     forecaster = OneHourLSTM(asset=asset)
     target_time = datetime.datetime.strptime(target_time[0:13], '%Y-%m-%d %H')
     result = forecaster.forecast(target_time=target_time)

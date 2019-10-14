@@ -10,7 +10,7 @@ class Executor(BaseResource):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.parser.add_argument('className', required=True, type=str, location=['json'])
-        self.parser.add_argument('modelURL', required=True, type=str, location=['json'])
+        self.parser.add_argument('modelURL', required=False, type=str, location=['json'])
         self.parser.add_argument('param', required=False, type=dict, location=['json'])
         self.ret = {'result': None, 'code': 0, 'msg': ''}
 
