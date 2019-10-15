@@ -75,7 +75,7 @@ class EnergyStatus(object):
                 from data_handler.api_data import jinmailang
                 data = jinmailang.get_jinmailang_df(
                     target_date)
-                two_days_len = 12 * 24 * 2 + 1
+                two_days_len = 12 * 24 * 2
                 if len(data) != two_days_len:
                     raise DataError("data length %s error, should be %s" %
                                     (len(data), two_days_len))
