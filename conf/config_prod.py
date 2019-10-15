@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # hdfs config
-HDFS_URL = 'http://10.39.48.25:50070'
+HDFS_URL = 'http://snhost22.master.cluster.enn.cn:50070'
 HDFS_ROOT = ''
 # HDFS_ROOT = '/algorithm/model/'
 

@@ -1,0 +1,12 @@
+python==3.6
+scikit-learn
+tensorflow==1.14.0
+gunicorn==19.9.0
+gevent==1.4.0
+requests==2.22.0
+Flask==1.1.1
+flask-restful==0.3.7
+Keras==2.2.4
+numpy==1.16.4
+tornado==6.0.3
+pandas==0.24.2
