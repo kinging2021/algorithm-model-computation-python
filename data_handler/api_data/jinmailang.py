@@ -18,8 +18,11 @@ def get_history_data(begin_time, days=2):
     url = url % (begin_s, end_s)
     # print(url)
     r = requests.get(url, verify=False)
-    data = r.json()
-    return data
+    try:
+        data = r.json()
+        return data
+    except:
+        raise Exception("error occurred when getting data from %s" % url)
 
 
 def get_jml_df(json_obj):
