@@ -41,7 +41,7 @@ class EEBoundCurve(object):
         points_min = []
         points_max = []
         for i in range(self.data.shape[0]):
-            if i - j >= self.min_num_sample and self.data[i, 0] >= step:
+            if self.data[i, 0] >= step:
                 if self.data.shape[0] - i < self.min_num_sample:
                     p_min, p_max = self._get_min_max_points(self.data[j:, :])
                 else:
@@ -52,14 +52,26 @@ class EEBoundCurve(object):
                         step += self.x_window
                 points_min.append(p_min)
                 points_max.append(p_max)
-        if points_min[0][0, 0] != self.data[0, 0]:
-            points_min.insert(0, [self.data[0, 0], points_min[0][0, 1]])
-        if points_max[0][0, 0] != self.data[0, 0]:
-            points_max.insert(0, [self.data[0, 0], points_max[0][0, 1]])
-        if points_min[-1][0, 0] != self.data[-1, 0]:
-            points_min.append([self.data[-1, 0], points_min[-1][0, 1]])
-        if points_max[-1][0, 0] != self.data[-1, 0]:
-            points_max.append([self.data[-1, 0], points_max[-1][0, 1]])
+
+        if self.data[0, 0] < points_max[0][0, 0]:
+            data = self.data[self.data[:, 0] < points_max[0][0, 0]]
+            y = np.max([data[:, 1].max(), points_max[0][0, 1]])
+            points_max[0] = [self.data[0, 0], y]
+
+        if self.data[0, 0] < points_min[0][0, 0]:
+            data = self.data[self.data[:, 0] < points_min[0][0, 0]]
+            y = np.min([data[:, 1].min(), points_min[0][0, 1]])
+            points_min[0] = [self.data[0, 0], y]
+
+        if self.data[-1, 0] > points_max[-1][0, 0]:
+            data = self.data[self.data[:, 0] > points_max[-1][0, 0]]
+            y = np.max([data[:, 1].max(), points_max[-1][0, 1]])
+            points_max[-1] = [self.data[-1, 0], y]
+
+        if self.data[-1, 0] > points_min[-1][0, 0]:
+            data = self.data[self.data[:, 0] > points_min[-1][0, 0]]
+            y = np.min([data[:, 1].min(), points_min[-1][0, 1]])
+            points_min[-1] = [self.data[-1, 0], y]
 
         self.sample_points_min = np.vstack(points_min)
         self.sample_points_max = np.vstack(points_max)
