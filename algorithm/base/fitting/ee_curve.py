@@ -32,12 +32,14 @@ class EECurve(object):
         points = []
         for i in range(self.data.shape[0]):
             if i - j >= self.min_num_sample and self.data[i, 0] >= step:
-                points.append(self._select_sample_points(self.data[j:i, :]))
-                j = i
-                step += self.x_window
-                while self.data[i, 0] >= step:
+                if self.data.shape[0] - i < self.min_num_sample:
+                    points.append(self._select_sample_points(self.data[j:, :]))
+                else:
+                    points.append(self._select_sample_points(self.data[j:i, :]))
+                    j = i
                     step += self.x_window
-        points.append(self._select_sample_points(self.data[j:, :]))
+                    while self.data[i, 0] >= step:
+                        step += self.x_window
         self.sample_points = np.vstack(points)
 
     @staticmethod

@@ -1,16 +1,20 @@
 import numpy as np
 from pyod.models.abod import ABOD
-from .ee_curve import EECurve
+from .ee_bound_curve import EEBoundCurve
 
 from algorithm.exception import ParamError, DataError
 
 
-class EECurveGSB(EECurve):
-    def __init__(self, x, y, x_range, y_range, bounds=None, outliers_fraction=0.005,
-                 x_window=5, min_num_sample=5, degree=6, out_size=100, clamped=True):
+class EEBoundCurveGSB(EEBoundCurve):
+    def __init__(self, x, y, x_range, y_range, bounds=None,
+                 outliers_fraction=0.005,
+                 x_window=5, min_num_sample=5, degree=6,
+                 out_size=100, iqr_coef=1.8, clamped=True):
+
         self.__data_check(x, y)
-        super(EECurveGSB, self).__init__(
-            np.vstack((x, y)).T, x_window, min_num_sample, degree, out_size, clamped
+        super(EEBoundCurveGSB, self).__init__(
+            np.vstack((x, y)).T, x_window, min_num_sample,
+            degree, out_size, iqr_coef, clamped
         )
 
         self.x = x
@@ -23,8 +27,10 @@ class EECurveGSB(EECurve):
 
     def get_result(self):
         return {
-            'x': self.eval_points[:, 0].tolist(),
-            'y': self.eval_points[:, 1].tolist(),
+            'x_min': self.eval_points_min[:, 0].tolist(),
+            'y_min': self.eval_points_min[:, 1].tolist(),
+            'x_max': self.eval_points_max[:, 0].tolist(),
+            'y_max': self.eval_points_max[:, 1].tolist(),
         }
 
     def process(self):
@@ -100,7 +106,9 @@ class EECurveGSB(EECurve):
         if self.clamped is None:
             self.clamped = True
         if self.outliers_fraction is None:
-            self.clamped = 0.005
+            self.outliers_fraction = 0.005
+        if self.iqr_coef is None:
+            self.iqr_coef = 1.8
 
     @staticmethod
     def __data_check(x, y):
@@ -135,19 +143,20 @@ def call(*args, **kwargs):
         if p not in param.keys():
             raise ParamError('Required parameter \'%s\' not found in \'param\'' % p)
 
-    s = EECurveGSB(
+    s = EEBoundCurveGSB(
         x=param['x'],
         y=param['y'],
         x_range=param['x_range'],
         y_range=param['y_range'],
 
         x_window=param.get('x_window'),
+        iqr_coef=param.get('iqr_coef'),
         degree=param.get('degree'),
         out_size=param.get('out_size'),
 
         bounds=param.get('bounds'),
-        outliers_fraction=param.get('outliers_fraction'),
         min_num_sample=param.get('min_num_sample'),
+        outliers_fraction=param.get('outliers_fraction'),
         clamped=param.get('clamped')
     )
 
