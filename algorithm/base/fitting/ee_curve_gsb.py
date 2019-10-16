@@ -100,7 +100,7 @@ class EECurveGSB(EECurve):
         if self.clamped is None:
             self.clamped = True
         if self.outliers_fraction is None:
-            self.clamped = 0.005
+            self.outliers_fraction = 0.005
 
     @staticmethod
     def __data_check(x, y):
