@@ -2,6 +2,7 @@ import pywt
 import numpy as np
 from scipy.signal import savgol_filter
 
+
 def wavelet_filter(data, wavefunc="db4", lv=5, m=1, n=5):
     coeff = pywt.wavedec(data, wavefunc, mode='sym', level=lv)
 
@@ -18,8 +19,11 @@ def wavelet_filter(data, wavefunc="db4", lv=5, m=1, n=5):
             else:
                 coeff[i][j] = 0  # 低于阈值置零
     denoised_data = pywt.waverec(coeff, wavefunc)
+    if len(denoised_data) > len(data):
+        denoised_data = denoised_data[:-1]
+    assert (len(data) == len(denoised_data))
     return denoised_data
+
 
 def sav_gol_filter(data):
     return savgol_filter(data, 5, 2, mode="nearest")
-

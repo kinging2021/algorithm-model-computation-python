@@ -3,14 +3,11 @@ import numpy as np
 from algorithm.base.regression.poly_ridge import PolyRidge
 from algorithm.base.filter.smoother import moving_average
 from algorithm.base.filter.denoiser import wavelet_filter
+from .utils import sort_by_x
 
 
 def get_curves(x, y, window_size=20, lower_quantile=0.01, upper_quantile=0.99):
-    x = np.array(x)
-    y = np.array(y)
-    sort_seq = np.argsort(x)
-    x = x[sort_seq]
-    y = y[sort_seq]
+    x,y = sort_by_x(x,y)
 
     rg = PolyRidge(alpha=1)
     rg.fit(x, y)
@@ -49,11 +46,8 @@ def get_curves(x, y, window_size=20, lower_quantile=0.01, upper_quantile=0.99):
 
 
 def get_resample_curves(x, y, window_size=20, lower_quantile=0.01, upper_quantile=0.99, sample_num=100):
-    x = np.array(x)
-    y = np.array(y)
-    sort_seq = np.argsort(x)
-    x = x[sort_seq]
-    y = y[sort_seq]
+
+    x,y = sort_by_x(x,y)
 
     rg = PolyRidge(alpha=1)
     rg.fit(x, y)

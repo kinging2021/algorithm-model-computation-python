@@ -1,16 +1,7 @@
-from .window_quantile import get_curves, get_resample_curves
 from data_sample.scatter_data import get_scatter_data
 
-import matplotlib.pyplot as plt
-
-
-def draw(data, x, mean, upper, lower, title="figure"):
-    plt.scatter(data[0], data[1], marker='.', color='#0000ba')
-    plt.plot(x, mean)
-    plt.plot(x, upper)
-    plt.plot(x, lower)
-    plt.title(title)
-    plt.show()
+from .window_quantile import get_curves, get_resample_curves
+from .utils import draw
 
 
 def test_curves():
