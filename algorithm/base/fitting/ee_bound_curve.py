@@ -6,8 +6,15 @@ from geomdl import knotvector
 # Energy efficiency bound curve
 class EEBoundCurve(object):
 
-    def __init__(self, data, x_window, min_num_sample,
-                 degree, out_size, iqr_coef=1.8, clamped=True):
+    def __init__(self,
+                 data,
+                 x_window,
+                 min_num_sample,
+                 degree,
+                 out_size,
+                 iqr_coef=1.8,
+                 clamped=True):
+
         self.data = data
         self.x_window = x_window
         self.degree = degree

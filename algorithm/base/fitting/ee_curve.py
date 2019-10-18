@@ -6,7 +6,14 @@ from geomdl import knotvector
 # EnergyEfficiencyCurve
 
 class EECurve(object):
-    def __init__(self, data, x_window, min_num_sample, degree, out_size, clamped=True):
+    def __init__(self,
+                 data,
+                 x_window,
+                 min_num_sample,
+                 degree,
+                 out_size,
+                 clamped=True):
+
         self.data = data
         self.x_window = x_window
         self.out_size = out_size

@@ -6,8 +6,18 @@ from algorithm.exception import ParamError, DataError
 
 
 class EECurveGSB(EECurve):
-    def __init__(self, x, y, x_range, y_range, bounds=None, outliers_fraction=0.005,
-                 x_window=5, min_num_sample=5, degree=6, out_size=100, clamped=True):
+    def __init__(self, x,
+                 y,
+                 x_range,
+                 y_range,
+                 bounds=None,
+                 outliers_fraction=0.005,
+                 x_window=5,
+                 min_num_sample=5,
+                 degree=6,
+                 out_size=100,
+                 clamped=True):
+
         self.__data_check(x, y)
         super(EECurveGSB, self).__init__(
             np.vstack((x, y)).T, x_window, min_num_sample, degree, out_size, clamped
@@ -59,32 +69,28 @@ class EECurveGSB(EECurve):
         # y
         self.data = self.data[self.data[:, 1].argsort()]
         index = np.ones(self.data.shape[0]).astype(bool)
-        if self.y_range[0] is not None:
-            if self.bounds[2]:
-                index = (self.data[:, 1] >= self.y_range[0]) & index
-            else:
-                index = (self.data[:, 1] > self.y_range[0]) & index
-        if self.y_range[1] is not None:
-            if self.bounds[3]:
-                index = (self.data[:, 1] <= self.y_range[1]) & index
-            else:
-                index = (self.data[:, 1] < self.y_range[1]) & index
-        self.data = self.data[index, :]
+        if self.bounds[2]:
+            index = (self.data[:, 1] >= self.y_range[0]) & index
+        else:
+            index = (self.data[:, 1] > self.y_range[0]) & index
+        if self.bounds[3]:
+            index = (self.data[:, 1] <= self.y_range[1]) & index
+        else:
+            index = (self.data[:, 1] < self.y_range[1]) & index
+        self.data = self.data[index]
         # x
         # self.data sorted by self.data[:, 0] (sorted by x)
         self.data = self.data[self.data[:, 0].argsort()]
         index = np.ones(self.data.shape[0]).astype(bool)
-        if self.x_range[0] is not None:
-            if self.bounds[0]:
-                index = (self.data[:, 0] >= self.x_range[0]) & index
-            else:
-                index = (self.data[:, 0] > self.x_range[0]) & index
-        if self.x_range[1] is not None:
-            if self.bounds[1]:
-                index = (self.data[:, 0] <= self.x_range[1]) & index
-            else:
-                index = (self.data[:, 0] < self.x_range[1]) & index
-        self.data = self.data[index, :]
+        if self.bounds[0]:
+            index = (self.data[:, 0] >= self.x_range[0]) & index
+        else:
+            index = (self.data[:, 0] > self.x_range[0]) & index
+        if self.bounds[1]:
+            index = (self.data[:, 0] <= self.x_range[1]) & index
+        else:
+            index = (self.data[:, 0] < self.x_range[1]) & index
+        self.data = self.data[index]
 
     def __reset_default(self):
         if self.bounds is None:
