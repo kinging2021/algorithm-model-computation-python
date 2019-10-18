@@ -5,6 +5,7 @@ import numpy as np
 
 
 def draw(data, x, mean, upper, lower, title="figure"):
+    plt.figure()
     plt.scatter(data[0], data[1], marker='.', color='#0000ba')
     plt.plot(x, mean)
     plt.plot(x, upper)
