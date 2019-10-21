@@ -95,13 +95,13 @@ class EEBoundCurve(object):
         upper = q3 + self.iqr_coef * iqr
         lower = q1 - self.iqr_coef * iqr
         if upper >= y_max:
-            p_max = data[np.where(y == y_max)[0]]
+            p_max = data[np.where(y == y_max)[0][0]]
         else:
-            p_max = np.array([x, upper]).reshape((1, 2))
+            p_max = np.array([x, upper])
 
         if lower <= y_min:
-            p_min = data[np.where(y == y_min)[0]]
+            p_min = data[np.where(y == y_min)[0][0]]
         else:
-            p_min = np.array([x, lower]).reshape((1, 2))
+            p_min = np.array([x, lower])
 
         return p_min, p_max
