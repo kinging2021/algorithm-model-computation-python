@@ -90,7 +90,7 @@ class EEBoundCurve(object):
         q1 = np.percentile(y, 25, interpolation='nearest')
         q3 = np.percentile(y, 75, interpolation='nearest')
         tmp = np.percentile(y, 50, interpolation='nearest')
-        x = data[np.where(y == tmp)[0], 0]
+        x = data[np.where(y == tmp)[0][0], 0]
         iqr = q3 - q1
         upper = q3 + self.iqr_coef * iqr
         lower = q1 - self.iqr_coef * iqr
