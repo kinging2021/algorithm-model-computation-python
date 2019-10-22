@@ -7,7 +7,8 @@ from algorithm.exception import ParamError, DataError
 
 class EEBoundCurveGSB(EEBoundCurve):
     def __init__(self,
-                 x, y,
+                 x,
+                 y,
                  x_range,
                  y_range,
                  bounds=None,

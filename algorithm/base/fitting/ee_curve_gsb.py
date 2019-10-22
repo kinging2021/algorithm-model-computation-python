@@ -6,7 +6,8 @@ from algorithm.exception import ParamError, DataError
 
 
 class EECurveGSB(EECurve):
-    def __init__(self, x,
+    def __init__(self,
+                 x,
                  y,
                  x_range,
                  y_range,
