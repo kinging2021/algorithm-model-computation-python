@@ -12,14 +12,14 @@ class EEBoundCurve(object):
                  min_num_sample,
                  degree,
                  out_size,
-                 iqr_coef=1.8,
+                 scale=1.0,
                  clamped=True):
 
         self.data = data
         self.x_window = x_window
         self.degree = degree
         self.out_size = out_size
-        self.iqr_coef = iqr_coef
+        self.scale = scale
         self.clamped = clamped
         self.min_num_sample = min_num_sample
 
@@ -60,24 +60,24 @@ class EEBoundCurve(object):
                 points_min.append(p_min)
                 points_max.append(p_max)
 
-        if self.data[0, 0] < points_max[0][0, 0]:
-            data = self.data[self.data[:, 0] < points_max[0][0, 0]]
-            y = np.max([data[:, 1].max(), points_max[0][0, 1]])
+        if self.data[0, 0] < points_max[0][0]:
+            data = self.data[self.data[:, 0] < points_max[0][0]]
+            y = np.max([data[:, 1].max(), points_max[0][1]])
             points_max[0] = [self.data[0, 0], y]
 
-        if self.data[0, 0] < points_min[0][0, 0]:
-            data = self.data[self.data[:, 0] < points_min[0][0, 0]]
-            y = np.min([data[:, 1].min(), points_min[0][0, 1]])
+        if self.data[0, 0] < points_min[0][0]:
+            data = self.data[self.data[:, 0] < points_min[0][0]]
+            y = np.min([data[:, 1].min(), points_min[0][1]])
             points_min[0] = [self.data[0, 0], y]
 
-        if self.data[-1, 0] > points_max[-1][0, 0]:
-            data = self.data[self.data[:, 0] > points_max[-1][0, 0]]
-            y = np.max([data[:, 1].max(), points_max[-1][0, 1]])
+        if self.data[-1, 0] > points_max[-1][0]:
+            data = self.data[self.data[:, 0] > points_max[-1][0]]
+            y = np.max([data[:, 1].max(), points_max[-1][1]])
             points_max[-1] = [self.data[-1, 0], y]
 
-        if self.data[-1, 0] > points_min[-1][0, 0]:
-            data = self.data[self.data[:, 0] > points_min[-1][0, 0]]
-            y = np.min([data[:, 1].min(), points_min[-1][0, 1]])
+        if self.data[-1, 0] > points_min[-1][0]:
+            data = self.data[self.data[:, 0] > points_min[-1][0]]
+            y = np.min([data[:, 1].min(), points_min[-1][1]])
             points_min[-1] = [self.data[-1, 0], y]
 
         self.sample_points_min = np.vstack(points_min)
@@ -88,12 +88,12 @@ class EEBoundCurve(object):
         y_min = y.min()
         y_max = y.max()
         q1 = np.percentile(y, 25, interpolation='nearest')
+        q2 = np.percentile(y, 50, interpolation='nearest')
         q3 = np.percentile(y, 75, interpolation='nearest')
-        tmp = np.percentile(y, 50, interpolation='nearest')
-        x = data[np.where(y == tmp)[0][0], 0]
+        x = data[np.where(y == q2)[0][0], 0]
         iqr = q3 - q1
-        upper = q3 + self.iqr_coef * iqr
-        lower = q1 - self.iqr_coef * iqr
+        upper = q3 + 1.5 * iqr
+        lower = q1 - 1.5 * iqr
         if upper >= y_max:
             p_max = data[np.where(y == y_max)[0][0]]
         else:
@@ -103,5 +103,8 @@ class EEBoundCurve(object):
             p_min = data[np.where(y == y_min)[0][0]]
         else:
             p_min = np.array([x, lower])
+
+        p_min[1] = self.scale * (p_min[1] - q2) + q2
+        p_max[1] = self.scale * (p_max[1] - q2) + q2
 
         return p_min, p_max

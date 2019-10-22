@@ -16,13 +16,13 @@ class EEBoundCurveGSB(EEBoundCurve):
                  min_num_sample=5,
                  degree=6,
                  out_size=100,
-                 iqr_coef=1.8,
+                 scale=1.0,
                  clamped=True):
 
         self.__data_check(x, y)
         super(EEBoundCurveGSB, self).__init__(
             np.vstack((x, y)).T, x_window, min_num_sample,
-            degree, out_size, iqr_coef, clamped
+            degree, out_size, scale, clamped
         )
 
         self.x = x
@@ -111,8 +111,8 @@ class EEBoundCurveGSB(EEBoundCurve):
             self.clamped = True
         if self.outliers_fraction is None:
             self.outliers_fraction = 0.005
-        if self.iqr_coef is None:
-            self.iqr_coef = 1.8
+        if self.scale is None:
+            self.scale = 1.0
 
     @staticmethod
     def __data_check(x, y):
@@ -154,9 +154,9 @@ def call(*args, **kwargs):
         y_range=param['y_range'],
 
         x_window=param.get('x_window'),
-        iqr_coef=param.get('iqr_coef'),
         degree=param.get('degree'),
         out_size=param.get('out_size'),
+        scale=param.get('scale'),
 
         bounds=param.get('bounds'),
         min_num_sample=param.get('min_num_sample'),
