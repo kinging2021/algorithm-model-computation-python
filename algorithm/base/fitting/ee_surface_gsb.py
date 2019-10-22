@@ -6,10 +6,23 @@ from algorithm.exception import ParamError, DataError
 
 
 class EESurfaceGSB(EESurface):
-    def __init__(self, x, y, z, x_range, y_range, z_range,
-                 bounds=None, outliers_fraction=0.005,
-                 x_window=5.0, y_window=1.0, min_num_sample=5,
-                 degree_x=6, degree_y=3, out_size=1000, clamped=True):
+    def __init__(self,
+                 x,
+                 y,
+                 z,
+                 x_range,
+                 y_range,
+                 z_range,
+                 bounds=None,
+                 outliers_fraction=0.005,
+                 x_window=5.0,
+                 y_window=1.0,
+                 min_num_sample=5,
+                 degree_x=6,
+                 degree_y=3,
+                 out_size=1000,
+                 clamped=True):
+
         self.__data_check(x, y, z)
         super(EESurfaceGSB, self).__init__(
             np.vstack((x, y, z)).T, x_window, y_window,
