@@ -3,6 +3,7 @@ from pyod.models.abod import ABOD
 from .ee_curve import EECurve
 
 from algorithm.exception import ParamError, DataError
+from utils.tool import get_arg
 
 
 class EECurveGSB(EECurve):
@@ -13,29 +14,34 @@ class EECurveGSB(EECurve):
                  y_range,
                  bounds=None,
                  outliers_fraction=0.005,
-                 x_window=5,
+                 x_window=5.0,
                  min_num_sample=5,
                  degree=6,
                  out_size=100,
+                 bound_scale=1.0,
                  clamped=True):
 
         self.__data_check(x, y)
         super(EECurveGSB, self).__init__(
-            np.vstack((x, y)).T, x_window, min_num_sample, degree, out_size, clamped
+            np.vstack((x, y)).T, x_window, min_num_sample,
+            degree, out_size, bound_scale, clamped
         )
 
         self.x = x
         self.y = y
         self.x_range = x_range
         self.y_range = y_range
-        self.bounds = bounds
-        self.outliers_fraction = outliers_fraction
-        self.__reset_default()
+        self.bounds = get_arg(bounds, (False, False, False, False))
+        self.outliers_fraction = get_arg(outliers_fraction, 0.005)
 
     def get_result(self):
         return {
-            'x': self.eval_points[:, 0].tolist(),
-            'y': self.eval_points[:, 1].tolist(),
+            'x_expected': self.eval_points_expected[:, 0].tolist(),
+            'y_expected': self.eval_points_expected[:, 1].tolist(),
+            'x_lower': self.eval_points_lower[:, 0].tolist(),
+            'y_lower': self.eval_points_lower[:, 1].tolist(),
+            'x_upper': self.eval_points_upper[:, 0].tolist(),
+            'y_upper': self.eval_points_upper[:, 1].tolist(),
         }
 
     def process(self):
@@ -93,22 +99,6 @@ class EECurveGSB(EECurve):
             index = (self.data[:, 0] < self.x_range[1]) & index
         self.data = self.data[index]
 
-    def __reset_default(self):
-        if self.bounds is None:
-            self.bounds = (False, False, False, False)
-        if self.min_num_sample is None:
-            self.min_num_sample = 5
-        if self.degree is None:
-            self.degree = 6
-        if self.out_size is None:
-            self.out_size = 100
-        if self.x_window is None:
-            self.x_window = 5
-        if self.clamped is None:
-            self.clamped = True
-        if self.outliers_fraction is None:
-            self.outliers_fraction = 0.005
-
     @staticmethod
     def __data_check(x, y):
         if len(x) != len(y):
@@ -155,8 +145,9 @@ def call(*args, **kwargs):
         bounds=param.get('bounds'),
         outliers_fraction=param.get('outliers_fraction'),
         min_num_sample=param.get('min_num_sample'),
-        clamped=param.get('clamped')
+        bound_scale=param.get('bound_scale'),
+        clamped=param.get('clamped'),
     )
 
     s.process()
-    return s.get_result()
+    return s

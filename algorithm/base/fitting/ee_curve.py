@@ -2,6 +2,8 @@ import numpy as np
 from geomdl import BSpline
 from geomdl import knotvector
 
+from utils.tool import get_arg
+
 
 # EnergyEfficiencyCurve
 
@@ -12,47 +14,131 @@ class EECurve(object):
                  min_num_sample,
                  degree,
                  out_size,
+                 bound_scale=1.0,
                  clamped=True):
 
         self.data = data
-        self.x_window = x_window
-        self.out_size = out_size
-        self.degree = degree
-        self.clamped = clamped
-        self.min_num_sample = min_num_sample
-        self.sample_points = None
-        self.eval_points = None
+        self.x_window = get_arg(x_window, 5)
+        self.min_num_sample = get_arg(min_num_sample, 5)
+        self.degree = get_arg(degree, 6)
+        self.out_size = get_arg(out_size, 100)
+        self.bound_scale = get_arg(bound_scale, 1.0)
+        self.clamped = get_arg(clamped, True)
+
+        self.sample_points_expected = None
+        self.eval_points_expected = None
+        
+        self.sample_points_lower = None
+        self.eval_points_lower = None
+        
+        self.sample_points_upper = None
+        self.eval_points_upper = None
 
     def evaluate(self):
-        curve = BSpline.Curve()
-        curve.degree = self.degree
-        curve.ctrlpts = self.sample_points.tolist()
-        curve.knotvector = knotvector.generate(curve.degree, len(curve.ctrlpts),
-                                               clamped=self.clamped)
-        curve.delta = 1.0 / self.out_size
-        curve.evaluate()
-        self.eval_points = np.array(curve.evalpts)[:, 0:2]
+        def get_evalpts(data):
+            curve = BSpline.Curve()
+            curve.degree = self.degree
+            curve.ctrlpts = data.tolist()
+            curve.knotvector = knotvector.generate(curve.degree, len(curve.ctrlpts),
+                                                   clamped=self.clamped)
+            curve.delta = 1.0 / self.out_size
+            curve.evaluate()
+            return np.array(curve.evalpts)[:, 0:2]
+
+        self.eval_points_expected = get_evalpts(self.sample_points_expected)
+        self.eval_points_lower = get_evalpts(self.sample_points_lower)
+        self.eval_points_upper = get_evalpts(self.sample_points_upper)
 
     def sampling(self):
+        self._sampling_expected()
+        self._sampling_lower_upper()
+
+    def _sampling_expected(self):
         j = 0
         step = self.data[j, 0] + self.x_window
         points = []
         for i in range(self.data.shape[0]):
             if i - j >= self.min_num_sample and self.data[i, 0] >= step:
                 if self.data.shape[0] - i < self.min_num_sample:
-                    points.append(self._select_sample_points(self.data[j:, :]))
+                    points.append(self.__select_expected_points(self.data[j:, :]))
                 else:
-                    points.append(self._select_sample_points(self.data[j:i, :]))
+                    points.append(self.__select_expected_points(self.data[j:i, :]))
                     j = i
                     step += self.x_window
                     while self.data[i, 0] >= step:
                         step += self.x_window
-        self.sample_points = np.vstack(points)
+        self.sample_points_expected = np.vstack(points)
+
+    def _sampling_lower_upper(self):
+        j = 0
+        step = self.data[j, 0] + self.x_window
+        points_lower = []
+        points_upper = []
+        for i in range(self.data.shape[0]):
+            if self.data[i, 0] >= step:
+                if self.data.shape[0] - i < self.min_num_sample:
+                    p_lower, p_upper = self.__get_lower_upper_points(self.data[j:, :])
+                else:
+                    p_lower, p_upper = self.__get_lower_upper_points(self.data[j:i, :])
+                    j = i
+                    step += self.x_window
+                    while self.data[i, 0] >= step:
+                        step += self.x_window
+                points_lower.append(p_lower)
+                points_upper.append(p_upper)
+
+        if self.data[0, 0] < points_upper[0][0]:
+            data = self.data[self.data[:, 0] < points_upper[0][0]]
+            y = np.max([data[:, 1].max(), points_upper[0][1]])
+            points_upper[0] = [self.data[0, 0], y]
+
+        if self.data[0, 0] < points_lower[0][0]:
+            data = self.data[self.data[:, 0] < points_lower[0][0]]
+            y = np.min([data[:, 1].min(), points_lower[0][1]])
+            points_lower[0] = [self.data[0, 0], y]
+
+        if self.data[-1, 0] > points_upper[-1][0]:
+            data = self.data[self.data[:, 0] > points_upper[-1][0]]
+            y = np.max([data[:, 1].max(), points_upper[-1][1]])
+            points_upper[-1] = [self.data[-1, 0], y]
+
+        if self.data[-1, 0] > points_lower[-1][0]:
+            data = self.data[self.data[:, 0] > points_lower[-1][0]]
+            y = np.min([data[:, 1].min(), points_lower[-1][1]])
+            points_lower[-1] = [self.data[-1, 0], y]
+
+        self.sample_points_lower = np.vstack(points_lower)
+        self.sample_points_upper = np.vstack(points_upper)
 
     @staticmethod
-    def _select_sample_points(data):
+    def __select_expected_points(data):
         distance_x = np.square(data[:, 0] - data[:, 0].mean())
         distance_y = np.square(data[:, 1] - data[:, 1].mean())
         index = np.argmin(distance_x + distance_y)
         return data[index, :]
 
+    def __get_lower_upper_points(self, data):
+        y = data[:, 1]
+        y_min = y.min()
+        y_max = y.max()
+        q1 = np.percentile(y, 25, interpolation='nearest')
+        q2 = np.percentile(y, 50, interpolation='nearest')
+        q3 = np.percentile(y, 75, interpolation='nearest')
+        x = data[np.where(y == q2)[0][0], 0]
+        iqr = q3 - q1
+        upper = q3 + 1.5 * iqr
+        lower = q1 - 1.5 * iqr
+        if upper >= y_max:
+            p_upper = data[np.where(y == y_max)[0][0]]
+        else:
+            p_upper = np.array([x, upper])
+
+        if lower <= y_min:
+            p_lower = data[np.where(y == y_min)[0][0]]
+        else:
+            p_lower = np.array([x, lower])
+
+        p_lower[1] = self.bound_scale * (p_lower[1] - q2) + q2
+        p_upper[1] = self.bound_scale * (p_upper[1] - q2) + q2
+
+        return p_lower, p_upper
