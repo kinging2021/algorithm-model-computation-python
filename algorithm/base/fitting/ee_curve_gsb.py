@@ -27,8 +27,6 @@ class EECurveGSB(EECurve):
             degree, out_size, bound_scale, clamped
         )
 
-        self.x = x
-        self.y = y
         self.x_range = x_range
         self.y_range = y_range
         self.bounds = get_arg(bounds, (False, False, False, False))
