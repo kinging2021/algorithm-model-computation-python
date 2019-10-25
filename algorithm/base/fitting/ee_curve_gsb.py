@@ -150,4 +150,4 @@ def call(*args, **kwargs):
     )
 
     s.process()
-    return s
+    return s.get_result()
