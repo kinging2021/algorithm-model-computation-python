@@ -2,6 +2,7 @@ import numpy as np
 from pyod.models.abod import ABOD
 from .ee_surface import EESurface
 
+from utils.tool import get_arg
 from algorithm.exception import ParamError, DataError
 
 
@@ -21,12 +22,14 @@ class EESurfaceGSB(EESurface):
                  degree_x=6,
                  degree_y=3,
                  out_size=1000,
+                 bound_scale=1.0,
                  clamped=True):
 
         self.__data_check(x, y, z)
         super(EESurfaceGSB, self).__init__(
             np.vstack((x, y, z)).T, x_window, y_window,
-            min_num_sample, degree_x, degree_y, out_size, clamped
+            min_num_sample, degree_x, degree_y,
+            out_size, bound_scale, clamped
         )
 
         self.x = x
@@ -35,15 +38,20 @@ class EESurfaceGSB(EESurface):
         self.x_range = x_range
         self.y_range = y_range
         self.z_range = z_range
-        self.bounds = bounds
-        self.outliers_fraction = outliers_fraction
-        self.__reset_default()
+        self.bounds = get_arg(bounds, (False, False, False, False, False, False))
+        self.outliers_fraction = get_arg(outliers_fraction, 0.005)
 
     def get_result(self):
         return {
-            'x': self.eval_points[:, 0].tolist(),
-            'y': self.eval_points[:, 1].tolist(),
-            'z': self.eval_points[:, 2].tolist(),
+            'x_expected': self.eval_points_expected[:, 0].tolist(),
+            'y_expected': self.eval_points_expected[:, 1].tolist(),
+            'z_expected': self.eval_points_expected[:, 2].tolist(),
+            'x_lower': self.eval_points_lower[:, 0].tolist(),
+            'y_lower': self.eval_points_lower[:, 1].tolist(),
+            'z_lower': self.eval_points_lower[:, 2].tolist(),
+            'x_upper': self.eval_points_upper[:, 0].tolist(),
+            'y_upper': self.eval_points_upper[:, 1].tolist(),
+            'z_upper': self.eval_points_upper[:, 2].tolist(),
         }
 
     def process(self):
@@ -119,26 +127,6 @@ class EESurfaceGSB(EESurface):
             index = (self.data[:, 0] < self.x_range[1]) & index
         self.data = self.data[index]
 
-    def __reset_default(self):
-        if self.bounds is None:
-            self.bounds = (False, False, False, False, False, False)
-        if self.min_num_sample is None:
-            self.min_num_sample = 5
-        if self.degree_x is None:
-            self.degree_x = 6
-        if self.degree_y is None:
-            self.degree_y = 3
-        if self.out_size is None:
-            self.out_size = 1000
-        if self.x_window is None:
-            self.x_window = 5.0
-        if self.y_window is None:
-            self.y_window = 1.0
-        if self.clamped is None:
-            self.clamped = True
-        if self.outliers_fraction is None:
-            self.outliers_fraction = 0.005
-
     @staticmethod
     def __data_check(x, y, z):
         if len(x) != len(y) or len(y) != len(z):
@@ -191,6 +179,7 @@ def call(*args, **kwargs):
         bounds=param.get('bounds'),
         outliers_fraction=param.get('outliers_fraction'),
         min_num_sample=param.get('min_num_sample'),
+        bound_scale=param.get('bound_scale'),
         clamped=param.get('clamped')
     )
 

@@ -1,7 +1,10 @@
 import numpy as np
 from geomdl import BSpline
 from geomdl import knotvector
-from sklearn.neighbors import KNeighborsRegressor
+from scipy.interpolate import interp1d
+
+from .ee_curve import EECurve
+from utils.tool import get_arg
 
 
 # EnergyEfficiencySurface
@@ -15,55 +18,85 @@ class EESurface(object):
                  degree_x,
                  degree_y,
                  out_size,
+                 bound_scale=1.0,
                  clamped=True):
 
         self.data = data
-        self.x_window = x_window
-        self.y_window = y_window
-        self.out_size = out_size
-        self.degree_x = degree_x
-        self.degree_y = degree_y
-        self.clamped = clamped
-        self.min_num_sample = min_num_sample
-        self.sample_points = None
-        self.eval_points = None
-        self.regression_points = None
+        self.x_window = get_arg(x_window, 5.0)
+        self.y_window = get_arg(y_window, 1.0)
+        self.out_size = get_arg(out_size, 1000)
+        self.degree_x = get_arg(degree_x, 6)
+        self.degree_y = get_arg(degree_y, 3)
+        self.bound_scale = get_arg(bound_scale, 1.0)
+        self.clamped = get_arg(clamped, True)
+        self.min_num_sample = get_arg(min_num_sample, 5)
+
+        self.regression_pos = None
+
+        self.sample_points_expected = None
+        self.regression_points_expected = None
+        self.eval_points_expected = None
+
+        self.sample_points_lower = None
+        self.regression_points_lower = None
+        self.eval_points_lower = None
+
+        self.sample_points_upper = None
+        self.regression_points_upper = None
+        self.eval_points_upper = None
 
     def evaluate(self):
-        surf = BSpline.Surface()
+        def get_evalpts(ctrl_pts):
+            # for debug
+            # x_max, y_max, _ = ctrl_pts.max(axis=0)
+            # x_min, y_min, _ = ctrl_pts.min(axis=0)
+            # scaler = (x_max - x_min) / (y_max - y_min)
+            # ctrl_pts[:, 1] = (ctrl_pts[:, 1] - y_min) * scaler
+            #
 
-        ctrl_pts = np.vstack((self.sample_points, self.regression_points))
-        ctrl_pts = ctrl_pts[:, [1, 0, 2]]  # [X, Y, Z] -> [Y, X, Z]
-        ctrl_pts = ctrl_pts[np.lexsort((ctrl_pts[:, 1], ctrl_pts[:, 0]))]
-        ctrl_pts = ctrl_pts.tolist()
+            surf = BSpline.Surface()
+            surf.degree_u = self.degree_y
+            surf.degree_v = self.degree_x
 
-        x_range, y_range, _ = np.ptp(self.data, axis=0)
-        num_u = int(y_range // self.y_window + 1)
-        num_v = int(x_range // self.x_window + 1)
-        surf.degree_u = self.degree_y
-        surf.degree_v = self.degree_x
+            ctrl_pts = ctrl_pts[:, [1, 0, 2]]  # [X, Y, Z] -> [Y, X, Z]
+            ctrl_pts = ctrl_pts[np.lexsort((ctrl_pts[:, 1], ctrl_pts[:, 0]))]
 
-        surf.set_ctrlpts(ctrl_pts, num_u, num_v)
-        surf.knotvector_u = knotvector.generate(surf.degree_u, num_u, clamped=self.clamped)
-        surf.knotvector_v = knotvector.generate(surf.degree_v, num_v, clamped=self.clamped)
-        surf.delta = 1.0 / np.sqrt(self.out_size)
-        surf.evaluate()
-        eval_points = np.array(surf.evalpts)
-        self.eval_points = eval_points[:, [1, 0, 2]]  # [Y, X, Z] -> [X, Y, Z]
+            num_u = np.unique(ctrl_pts[:, 0]).shape[0]
+            num_v = int(ctrl_pts.shape[0] / num_u)
 
-        # todo: data for web front
-        # surf.tessellate()
-        # self.faces = surf.tessellator.faces
-        # self.vertices = surf.tessellator.vertices
-        # from geomdl.visualization.VisPlotly import VisSurface, VisConfig
-        # vis_comp = VisSurface(config=VisConfig(ctrlpts=False))
-        # surf.vis = vis_comp
-        # surf.render()
+            surf.set_ctrlpts(ctrl_pts.tolist(), num_u, num_v)
+            surf.knotvector_u = knotvector.generate(surf.degree_u, num_u, clamped=self.clamped)
+            surf.knotvector_v = knotvector.generate(surf.degree_v, num_v, clamped=self.clamped)
+            surf.delta = 1.0 / np.sqrt(self.out_size)
+            surf.evaluate()
+            eval_points = np.array(surf.evalpts)
+            eval_points = eval_points[:, [1, 0, 2]]  # [Y, X, Z] -> [X, Y, Z]
+
+            # todo: data for web front
+            # surf.tessellate()
+            # self.faces = surf.tessellator.faces
+            # self.vertices = surf.tessellator.vertices
+            # from geomdl.visualization.VisPlotly import VisSurface, VisConfig
+            # vis_comp = VisSurface(config=VisConfig(ctrlpts=True))
+            # surf.vis = vis_comp
+            # surf.render()
+
+            return eval_points
+
+        ctrl_pts = np.vstack((self.sample_points_expected, self.regression_points_expected))
+        self.eval_points_expected = get_evalpts(ctrl_pts)
+
+        ctrl_pts = np.vstack((self.sample_points_lower, self.regression_points_lower))
+        self.eval_points_lower = get_evalpts(ctrl_pts)
+
+        ctrl_pts = np.vstack((self.sample_points_upper, self.regression_points_upper))
+        self.eval_points_upper = get_evalpts(ctrl_pts)
 
     def sampling(self):
-        points = []
-        regression_points = []
-
+        regression_pos = []
+        points_expected = []
+        points_lower = []
+        points_upper = []
         x = self.data[:, 0]
         x_cursor = x.min()
         x_max = x.max()
@@ -76,47 +109,98 @@ class EESurface(object):
             y_cursor = y_min
             while y_cursor <= y_max:
                 data = data_[(y_ >= y_cursor) & (y_ < y_cursor + self.y_window)]
-                if data.shape[0] != 0:
+                if data.shape[0] >= self.min_num_sample:
+                    p_expected, p_lower, p_upper = self._get_sample_points(data)
+
                     tmp_y = y_cursor + self.y_window / 2
-                    points.append(self._select_sample_points(data, tmp_y))
+                    p_expected[1] = tmp_y
+                    p_lower[1] = tmp_y
+                    p_upper[1] = tmp_y
+
+                    points_expected.append(p_expected)
+                    points_lower.append(p_lower)
+                    points_upper.append(p_upper)
                 else:
-                    regression_points.append([x_cursor + self.x_window / 2,
-                                              y_cursor + self.y_window / 2])
+                    regression_pos.append([x_cursor + self.x_window / 2,
+                                           y_cursor + self.y_window / 2])
                 y_cursor += self.y_window
             x_cursor += self.x_window
-        self.sample_points = np.vstack(points)
-        self.regression_points = np.vstack(regression_points)
 
-    def regressing(self):
-        test_in = self.regression_points.copy()
+        self.regression_pos = np.vstack(regression_pos)
+        self.sample_points_lower = np.vstack(points_lower)
+        self.sample_points_upper = np.vstack(points_upper)
+        self.sample_points_expected = np.vstack(points_expected)
 
-        feature = self.data[:, 0:2].copy()
-        value = self.data[:, 2].copy()
-
-        knr_1 = KNeighborsRegressor(weights="distance")
-        knr_1.fit(feature[:, 0].reshape(-1, 1), value)
-        predict = knr_1.predict(test_in[:, 0].reshape(-1, 1))
-
-        # x_max, y_max, _ = self.data.max(axis=0)
-        # x_min, y_min, _ = self.data.min(axis=0)
-        # if y_max != y_min:
-        #     scaler = (x_max - x_min) / (y_max - y_min)
-        #     knr_2 = KNeighborsRegressor(weights="distance")
-        #     feature[:, 1] = (feature[:, 1] - y_min) * scaler
-        #     knr_2.fit(feature, value)
-        #     test_in[:, 1] *= (test_in[:, 1] - y_min) * scaler
-        #     predict_2 = knr_2.predict(test_in)
-        #     predict = (predict + predict_2) / 2
-
-        tmp = np.vstack((self.regression_points.T, predict)).T
-        self.regression_points = tmp
-
-    @staticmethod
-    def _select_sample_points(data, y):
+    def _get_sample_points(self, data):
         distance_x = np.square(data[:, 0] - data[:, 0].mean())
         # distance_y = np.square(data[:, 1] - data[:, 1].mean())
         distance_z = np.square(data[:, 2] - data[:, 2].mean())
         index = np.argmin(distance_x + distance_z)
-        d = data[index, :].copy()
-        d[1] = y
-        return d
+        p_expected = data[index, :].copy()
+
+        z = data[:, 2]
+        z_min = z.min()
+        z_max = z.max()
+        q1 = np.percentile(z, 25, interpolation='nearest')
+        q3 = np.percentile(z, 75, interpolation='nearest')
+        q2 = np.percentile(z, 50, interpolation='nearest')
+        iqr = q3 - q1
+        upper = q3 + 1.5 * iqr
+        lower = q1 - 1.5 * iqr
+        x, y = data[np.where(z == q2)[0][0], 0:2]
+        if upper >= z_max:
+            p_upper = data[np.where(z == z_max)[0][0]].copy()
+        else:
+            p_upper = np.array([x, y, upper])
+
+        if lower <= z_min:
+            p_lower = data[np.where(z == z_min)[0][0]].copy()
+        else:
+            p_lower = np.array([x, y, lower])
+
+        delta = self.bound_scale * (p_lower[2] - q2)
+        p_lower[2] = q2 + delta
+
+        delta = self.bound_scale * (p_upper[2] - q2)
+        p_upper[2] = q2 + delta
+
+        return p_expected, p_lower, p_upper
+
+    def regressing(self):
+        r = EECurve(self.data[:, [0, 2]], self.x_window, self.min_num_sample,
+                    self.degree_x, self.out_size)
+        r.sampling()
+        r.evaluate()
+
+        # expected
+        x = r.eval_points_expected[:, 0]
+        y = r.eval_points_expected[:, 1]
+        r_expected = interp1d(x, y)
+        index = (self.regression_pos[:, 0] >= x[0]) & (self.regression_pos[:, 0] <= x[-1])
+        pos = self.regression_pos[index]
+        z = r_expected(pos[:, 0])
+        self.regression_points_expected = np.vstack((pos.T, z)).T
+        index = (self.sample_points_expected[:, 0] >= x[0]) & (self.sample_points_expected[:, 0] <= x[-1])
+        self.sample_points_expected = self.sample_points_expected[index]
+
+        # lower
+        x = r.eval_points_lower[:, 0]
+        y = r.eval_points_lower[:, 1]
+        r_lower = interp1d(x, y)
+        index = (self.regression_pos[:, 0] >= x[0]) & (self.regression_pos[:, 0] <= x[-1])
+        pos = self.regression_pos[index]
+        z = r_lower(pos[:, 0])
+        self.regression_points_lower = np.vstack((pos.T, z)).T
+        index = (self.sample_points_lower[:, 0] >= x[0]) & (self.sample_points_lower[:, 0] <= x[-1])
+        self.sample_points_lower = self.sample_points_lower[index]
+
+        # upper
+        x = r.eval_points_upper[:, 0]
+        y = r.eval_points_upper[:, 1]
+        r_upper = interp1d(x, y)
+        index = (self.regression_pos[:, 0] >= x[0]) & (self.regression_pos[:, 0] <= x[-1])
+        pos = self.regression_pos[index]
+        z = r_upper(pos[:, 0])
+        self.regression_points_upper = np.vstack((pos.T, z)).T
+        index = (self.sample_points_upper[:, 0] >= x[0]) & (self.sample_points_upper[:, 0] <= x[-1])
+        self.sample_points_upper = self.sample_points_upper[index]
