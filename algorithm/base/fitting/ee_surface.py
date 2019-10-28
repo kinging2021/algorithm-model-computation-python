@@ -46,14 +46,8 @@ class EESurface(object):
         self.eval_points_upper = None
 
     def evaluate(self):
-        def get_evalpts(ctrl_pts):
-            # for debug
-            # x_max, y_max, _ = ctrl_pts.max(axis=0)
-            # x_min, y_min, _ = ctrl_pts.min(axis=0)
-            # scaler = (x_max - x_min) / (y_max - y_min)
-            # ctrl_pts[:, 1] = (ctrl_pts[:, 1] - y_min) * scaler
-            #
 
+        def get_evalpts(ctrl_pts):
             surf = BSpline.Surface()
             surf.degree_u = self.degree_y
             surf.degree_v = self.degree_x
@@ -71,15 +65,6 @@ class EESurface(object):
             surf.evaluate()
             eval_points = np.array(surf.evalpts)
             eval_points = eval_points[:, [1, 0, 2]]  # [Y, X, Z] -> [X, Y, Z]
-
-            # todo: data for web front
-            # surf.tessellate()
-            # self.faces = surf.tessellator.faces
-            # self.vertices = surf.tessellator.vertices
-            # from geomdl.visualization.VisPlotly import VisSurface, VisConfig
-            # vis_comp = VisSurface(config=VisConfig(ctrlpts=True))
-            # surf.vis = vis_comp
-            # surf.render()
 
             return eval_points
 
