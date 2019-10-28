@@ -24,4 +24,5 @@ class FlaskProductionConfig(object):
 
 FLASK_CONFIG = FlaskProductionConfig
 
-
+# history result api
+HISTORY_RESULT_API = 'http://algorithm-service-platform-backend.prod-algorithm-service.fnwrancher.enncloud.cn/internal/algorithm/get_result'

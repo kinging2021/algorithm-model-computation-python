@@ -24,4 +24,5 @@ class FlaskDevelopmentConfig(object):
 
 FLASK_CONFIG = FlaskDevelopmentConfig
 
-
+# history result api
+HISTORY_RESULT_API = 'http://algorithm-service-platform-backend.bigdata-dev.onrancher.enncloud.cn/internal/algorithm/get_result'
