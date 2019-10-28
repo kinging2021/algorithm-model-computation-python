@@ -34,12 +34,9 @@ class EECurveGSB(EECurve):
 
     def get_result(self):
         return {
-            'x_expected': self.eval_points_expected[:, 0].tolist(),
-            'y_expected': self.eval_points_expected[:, 1].tolist(),
-            'x_lower': self.eval_points_lower[:, 0].tolist(),
-            'y_lower': self.eval_points_lower[:, 1].tolist(),
-            'x_upper': self.eval_points_upper[:, 0].tolist(),
-            'y_upper': self.eval_points_upper[:, 1].tolist(),
+            'expected': self.eval_points_expected.tolist(),
+            'lower': self.eval_points_lower.tolist(),
+            'upper': self.eval_points_upper.tolist(),
         }
 
     def process(self):
