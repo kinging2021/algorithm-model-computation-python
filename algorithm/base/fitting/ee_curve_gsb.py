@@ -33,10 +33,28 @@ class EECurveGSB(EECurve):
         self.outliers_fraction = get_arg(outliers_fraction, 0.005)
 
     def get_result(self):
+        expected_x_min, expected_y_min = self.eval_points_expected.min(axis=0)
+        expected_x_max, expected_y_max = self.eval_points_expected.max(axis=0)
+        lower_x_min, lower_y_min = self.eval_points_lower.min(axis=0)
+        lower_x_max, lower_y_max = self.eval_points_lower.max(axis=0)
+        upper_x_min, upper_y_min = self.eval_points_upper.min(axis=0)
+        upper_x_max, upper_y_max = self.eval_points_upper.max(axis=0)
         return {
             'expected': self.eval_points_expected.tolist(),
+            'expected_range': {
+                'x': [expected_x_min, expected_x_max],
+                'y': [expected_y_min, expected_y_max],
+            },
             'lower': self.eval_points_lower.tolist(),
+            'lower_range': {
+                'x': [lower_x_min, lower_x_max],
+                'y': [lower_y_min, lower_y_max],
+            },
             'upper': self.eval_points_upper.tolist(),
+            'upper_range': {
+                'x': [upper_x_min, upper_x_max],
+                'y': [upper_y_min, upper_y_max],
+            },
         }
 
     def process(self):
