@@ -3,6 +3,7 @@ from geomdl import BSpline
 from geomdl import knotvector
 
 from utils.tool import get_arg
+from algorithm.exception import ParamError
 
 
 # EnergyEfficiencyCurve
@@ -27,12 +28,14 @@ class EECurve(object):
 
         self.sample_points_expected = None
         self.eval_points_expected = None
-        
+
         self.sample_points_lower = None
         self.eval_points_lower = None
-        
+
         self.sample_points_upper = None
         self.eval_points_upper = None
+
+        self.__arg_check()
 
     def evaluate(self):
         def get_evalpts(data):
@@ -59,7 +62,7 @@ class EECurve(object):
         points = []
         for i in range(self.data.shape[0]):
             if i - j >= self.min_num_sample and self.data[i, 0] >= step:
-                if self.data.shape[0] - i < self.min_num_sample:
+                if self.data.shape[0] - i <= self.min_num_sample:
                     points.append(self.__select_expected_points(self.data[j:, :]))
                 else:
                     points.append(self.__select_expected_points(self.data[j:i, :]))
@@ -76,7 +79,7 @@ class EECurve(object):
         points_upper = []
         for i in range(self.data.shape[0]):
             if self.data[i, 0] >= step:
-                if self.data.shape[0] - i < self.min_num_sample:
+                if self.data.shape[0] - i <= self.min_num_sample:
                     p_lower, p_upper = self.__get_lower_upper_points(self.data[j:, :])
                 else:
                     p_lower, p_upper = self.__get_lower_upper_points(self.data[j:i, :])
@@ -86,6 +89,10 @@ class EECurve(object):
                         step += self.x_window
                 points_lower.append(p_lower)
                 points_upper.append(p_upper)
+        if len(points_lower) < self.degree + 1:
+            # Number of control points should be at least degree + 1
+            raise ParamError('The input data is not enough or x_window is too wide, '
+                             'please check input data, x_window and min_num_sample')
 
         if self.data[0, 0] < points_upper[0][0]:
             data = self.data[self.data[:, 0] < points_upper[0][0]]
@@ -142,3 +149,13 @@ class EECurve(object):
         p_upper[1] = self.bound_scale * (p_upper[1] - q2) + q2
 
         return p_lower, p_upper
+
+    def __arg_check(self):
+        if self.degree < 3:
+            raise ParamError('Parameter \'degree\' should be at least 3')
+        if self.min_num_sample < 1:
+            raise ParamError('Parameter \'min_num_sample\' should be at least 1')
+        if self.data.shape[0] < self.degree + 1:
+            # Number of control points should be at least degree + 1
+            raise ParamError('The input data is not enough or x_window is too wide, '
+                             'please check input data, x_window and min_num_sample')

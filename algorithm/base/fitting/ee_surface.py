@@ -1,10 +1,12 @@
 import numpy as np
 from geomdl import BSpline
 from geomdl import knotvector
+from geomdl.exceptions import GeomdlException
 from scipy.interpolate import interp1d
 
 from .ee_curve import EECurve
 from utils.tool import get_arg
+from algorithm.exception import ParamError
 
 
 # EnergyEfficiencySurface
@@ -45,6 +47,8 @@ class EESurface(object):
         self.regression_points_upper = None
         self.eval_points_upper = None
 
+        self.__arg_check()
+
     def evaluate(self):
 
         def get_evalpts(ctrl_pts):
@@ -58,7 +62,11 @@ class EESurface(object):
             num_u = np.unique(ctrl_pts[:, 0]).shape[0]
             num_v = int(ctrl_pts.shape[0] / num_u)
 
-            surf.set_ctrlpts(ctrl_pts.tolist(), num_u, num_v)
+            try:
+                surf.set_ctrlpts(ctrl_pts.tolist(), num_u, num_v)
+            except GeomdlException:
+                raise ParamError('The input data is not enough or x_window and y_window is too wide, '
+                                 'please check input data, x_window, y_window and min_num_sample')
             surf.knotvector_u = knotvector.generate(surf.degree_u, num_u, clamped=self.clamped)
             surf.knotvector_v = knotvector.generate(surf.degree_v, num_v, clamped=self.clamped)
             surf.delta = 1.0 / np.sqrt(self.out_size)
@@ -189,3 +197,11 @@ class EESurface(object):
         self.regression_points_upper = np.vstack((pos.T, z)).T
         index = (self.sample_points_upper[:, 0] >= x[0]) & (self.sample_points_upper[:, 0] <= x[-1])
         self.sample_points_upper = self.sample_points_upper[index]
+
+    def __arg_check(self):
+        if self.degree_x < 3:
+            raise ParamError('Parameter \'degree_x\' should be at least 3')
+        if self.degree_y < 3:
+            raise ParamError('Parameter \'degree_y\' should be at least 3')
+        if self.min_num_sample < 1:
+            raise ParamError('Parameter \'min_num_sample\' should be at least 1')
