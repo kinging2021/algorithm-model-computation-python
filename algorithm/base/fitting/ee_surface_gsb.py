@@ -2,7 +2,6 @@ import numpy as np
 from pyod.models.abod import ABOD
 from .ee_surface import EESurface
 
-from utils.tool import get_arg
 from algorithm.exception import ParamError, DataError
 
 
@@ -14,7 +13,7 @@ class EESurfaceGSB(EESurface):
                  x_range,
                  y_range,
                  z_range,
-                 bounds=None,
+                 bounds=(False, False, False, False, False, False),
                  outliers_fraction=0.005,
                  x_window=5.0,
                  y_window=1.0,
@@ -38,8 +37,8 @@ class EESurfaceGSB(EESurface):
         self.x_range = x_range
         self.y_range = y_range
         self.z_range = z_range
-        self.bounds = get_arg(bounds, (False, False, False, False, False, False))
-        self.outliers_fraction = get_arg(outliers_fraction, 0.005)
+        self.bounds = bounds
+        self.outliers_fraction = outliers_fraction
 
     def get_result(self):
         expected_x_min, expected_y_min, expected_z_min = self.eval_points_expected.min(axis=0)
@@ -185,17 +184,17 @@ def call(*args, **kwargs):
         y_range=param['y_range'],
         z_range=param['z_range'],
 
-        x_window=param.get('x_window'),
-        y_window=param.get('y_window'),
-        degree_x=param.get('degree_x'),
-        degree_y=param.get('degree_y'),
-        out_size=param.get('out_size'),
+        x_window=param.get('x_window', 5.0),
+        y_window=param.get('y_window', 1.0),
+        degree_x=param.get('degree_x', 6),
+        degree_y=param.get('degree_y', 3),
+        out_size=param.get('out_size', 1000),
 
-        bounds=param.get('bounds'),
-        outliers_fraction=param.get('outliers_fraction'),
-        min_num_sample=param.get('min_num_sample'),
-        bound_scale=param.get('bound_scale'),
-        clamped=param.get('clamped')
+        bounds=param.get('bounds', (False, False, False, False, False, False)),
+        outliers_fraction=param.get('outliers_fraction', 0.005),
+        min_num_sample=param.get('min_num_sample', 5),
+        bound_scale=param.get('bound_scale', 1.0),
+        clamped=param.get('clamped', True)
     )
 
     s.process()

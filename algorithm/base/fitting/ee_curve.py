@@ -2,7 +2,6 @@ import numpy as np
 from geomdl import BSpline
 from geomdl import knotvector
 
-from utils.tool import get_arg
 from algorithm.exception import ParamError
 
 
@@ -19,12 +18,12 @@ class EECurve(object):
                  clamped=True):
 
         self.data = data
-        self.x_window = get_arg(x_window, 5)
-        self.min_num_sample = get_arg(min_num_sample, 5)
-        self.degree = get_arg(degree, 6)
-        self.out_size = get_arg(out_size, 100)
-        self.bound_scale = get_arg(bound_scale, 1.0)
-        self.clamped = get_arg(clamped, True)
+        self.x_window = x_window
+        self.min_num_sample = min_num_sample
+        self.degree = degree
+        self.out_size = out_size
+        self.bound_scale = bound_scale
+        self.clamped = clamped
 
         self.sample_points_expected = None
         self.eval_points_expected = None

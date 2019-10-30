@@ -5,7 +5,6 @@ from geomdl.exceptions import GeomdlException
 from scipy.interpolate import interp1d
 
 from .ee_curve import EECurve
-from utils.tool import get_arg
 from algorithm.exception import ParamError
 
 
@@ -24,14 +23,14 @@ class EESurface(object):
                  clamped=True):
 
         self.data = data
-        self.x_window = get_arg(x_window, 5.0)
-        self.y_window = get_arg(y_window, 1.0)
-        self.out_size = get_arg(out_size, 1000)
-        self.degree_x = get_arg(degree_x, 6)
-        self.degree_y = get_arg(degree_y, 3)
-        self.bound_scale = get_arg(bound_scale, 1.0)
-        self.clamped = get_arg(clamped, True)
-        self.min_num_sample = get_arg(min_num_sample, 5)
+        self.x_window = x_window
+        self.y_window = y_window
+        self.out_size = out_size
+        self.degree_x = degree_x
+        self.degree_y = degree_y
+        self.bound_scale = bound_scale
+        self.clamped = clamped
+        self.min_num_sample = min_num_sample
 
         self.regression_pos = None
 
