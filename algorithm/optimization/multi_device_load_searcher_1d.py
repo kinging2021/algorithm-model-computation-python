@@ -1,4 +1,5 @@
-import bisect
+# -*- coding: utf-8 -*-
+
 import itertools
 import numpy as np
 
@@ -6,7 +7,8 @@ from algorithm.exception import ParamError
 
 
 class MultiDeviceLoadSearcher1D(object):
-    def __init__(self, devices, target_output, schedule_num=3):
+
+    def __init__(self, devices, target_output, schedule_num=5):
         self.devices = devices
         self.target_output = target_output
         self.schedule_num = schedule_num
@@ -17,24 +19,30 @@ class MultiDeviceLoadSearcher1D(object):
 
     def calc_feasible_solution(self):
         rated_sum = 0
-        for boiler in self.devices:
-            rated_sum += boiler['rated_output'] * boiler['load_max'] / 100
+        for device in self.devices:
+            rated_sum += device['rated_output'] * device['load_max'] / 100
         if rated_sum < self.target_output:
-            raise ParamError('The maximum rated output of all boiler is less than \'target_output\'')
+            msg = 'The maximum rated output of all device is less than \'target_output\'. \n'
+            for i, device in enumerate(self.devices):
+                if device.get('load_max_input'):
+                    msg += 'device[%d][\'load_max\'] is %d, ' \
+                           'but the max load in device[%d][\'cost_data\'] is %d \n' \
+                           % (i, device['load_max_input'], i, device['load_max'])
+            raise ParamError(msg)
 
-        for boiler in self.devices:
+        for device in self.devices:
             feasible = []
-            output_min = self.target_output - (rated_sum - boiler['rated_output'] * boiler['load_max'] / 100)
-            data = np.array(boiler['cost_data'])
-            if output_min < 0:
+            load_min_calc = self.target_output - (rated_sum - device['rated_output'] * device['load_max'] / 100)
+            data = np.array(device['cost_data'])
+            if load_min_calc < 0:
                 feasible.append([0, 0])
-                index = (data >= boiler['load_min']) & (data <= boiler['load_max'])
+                index = (data[:, 0] >= device['load_min']) & (data[:, 0] <= device['load_max'])
             else:
-                index = (data >= max(boiler['load_min'], output_min / boiler['rated_output']))\
-                        & (data <= boiler['load_max'])
+                index = (data[:, 0] >= max(device['load_min'], load_min_calc / device['rated_output'])) \
+                        & (data[:, 0] <= device['load_max'])
             data = data[index]
-            data[:, 0] = data[:, 0] * boiler['rated_output'] / 100
-            data[:, 1] *= boiler.get('cost_coef', 1)
+            data[:, 0] = data[:, 0] * device['rated_output'] / 100
+            data[:, 1] *= device.get('cost_coef', 1)
             feasible += data.tolist()
 
             self._feasible_list.append(feasible)
@@ -45,7 +53,7 @@ class MultiDeviceLoadSearcher1D(object):
             data = np.array(data)
             output_sum, cost_sum = data.sum(axis=0)
             if output_sum >= self.target_output:
-                pos = bisect.bisect(cost_list, cost_sum)
+                pos = np.searchsorted(cost_list, cost_sum)
                 if pos >= self.schedule_num:
                     continue
                 cost_list[pos] = cost_sum
@@ -65,15 +73,38 @@ class MultiDeviceLoadSearcher1D(object):
         return self.schedule_list
 
     def __arg_check(self):
-        pass
+        for device in self.devices:
+            data = np.array(device['cost_data'])
+            load_max_real = data[:, 0].max()
+            if device['load_max'] > load_max_real:
+                device['load_max_input'] = device['load_max']
+                device['load_max'] = load_max_real
 
 
 def call(*args, **kwargs):
+    # 参数示例
+    # param = {
+    #     'target_output': 24,
+    #     'devices': [
+    #         {  # device 1
+    #             'rated_output': 8,
+    #             'load_min': 30,
+    #             'load_max': 85,
+    #             'cost_data': []  # 能效曲线散点
+    #         },
+    #         {  # device 2
+    #             'rated_output': 6,
+    #             'load_min': 35,
+    #             'load_max': 85,
+    #             'cost_data': []  # 能效曲线散点
+    #         }
+    #     ],
+    # }
     param = kwargs.get('param')
     if param is None:
         raise ParamError('Missing required parameter in the JSON body: param')
 
-    for p in ['devices', 'target_output']:
+    for p in ['target_output', 'devices']:
         if p not in param.keys():
             raise ParamError('Required parameter \'%s\' not found in \'param\'' % p)
 
