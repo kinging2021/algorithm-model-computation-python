@@ -157,8 +157,6 @@ class MultiDeviceLoadLinprog1D(object):
         self._rated_sum = rated_sum
 
 
-
-
 def call(*args, **kwargs):
     # 参数示例
     # param = {
