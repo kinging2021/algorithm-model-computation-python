@@ -6,7 +6,7 @@ from .utils import draw, draw_surface
 
 def test_gbrt_curves():
     data = get_scatter_data()
-    x, mean, upper, lower = gbrt_curve_1D(data[0], data[1])
+    x, upper, lower, mean = gbrt_curve_1D(data[0], data[1])
     draw(data, x, mean, upper, lower, "gbrt figure")
     return
 

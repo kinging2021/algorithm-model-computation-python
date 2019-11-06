@@ -56,7 +56,6 @@ def gbrt_surface(x, y, z):
     max_x = np.max(x)
     min_y = np.min(y)
     max_y = np.max(y)
-    print(min_x, min_y)
     x = np.arange(min_x, max_x, (max_x - min_x) / 100)
     y = np.arange(min_y, max_y, (max_y - min_y) / 100)
     x, y = np.meshgrid(x, y)
