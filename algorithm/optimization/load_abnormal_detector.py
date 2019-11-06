@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import algorithm.exception
 
 
 class LoadAbnormalDetection(object):
@@ -17,11 +16,11 @@ class LoadAbnormalDetection(object):
         # 设定死值的阈值p1
         p1 = 5
         if data[data == 0].count() > p1:
-            return algorithm.exception.DataError()
+            return 1
         # 设定数据波动的阈值p2
         p2 = 10
-        if data[np.abs(data) > p2].count() >10:
-            return algorithm.exception.DataError()
+        if data[np.abs(data) > p2].count() > 10:
+            return 1
 
 
 def call(*args, **kwargs):
