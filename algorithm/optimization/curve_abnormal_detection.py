@@ -1,6 +1,7 @@
 import datetime
 import pandas as pd
 import numpy as np
+import algorithm.exception
 
 
 class AbnormalDetection(object):
@@ -15,11 +16,11 @@ class AbnormalDetection(object):
         # 设定斜率过大的阈值p1
         p1 = 3
         if data_diff[data_diff['slope'] > p1].count() > p1:
-            print('能效曲线突升！异常！！！')
+            return algorithm.exception.DataError()
         # 计算斜率之间的差值，正常曲线斜率差值应该大于等于0
         slope_diff = data_diff['slope'].diff()
         if slope_diff[slope_diff < 0.1].count() > 0:
-            print('能效曲线形态异常！！！！')
+            return algorithm.exception.DataError()
 
 
 def call(*args, **kwargs):
