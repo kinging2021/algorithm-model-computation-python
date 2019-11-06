@@ -18,8 +18,9 @@ class AbnormalDetection(object):
             return 1
         # 计算斜率之间的差值，正常曲线斜率差值应该大于等于0
         slope_diff = data_diff['slope'].diff()
-        if slope_diff[slope_diff < 0.1].count() > 0:
+        if slope_diff[slope_diff < -0.1].count() > 0:
             return 1
+        return 0
 
 
 def call(*args, **kwargs):

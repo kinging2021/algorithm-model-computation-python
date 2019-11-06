@@ -21,6 +21,7 @@ class LoadAbnormalDetection(object):
         p2 = 10
         if data[np.abs(data) > p2].count() > 10:
             return 1
+        return 0
 
 
 def call(*args, **kwargs):
